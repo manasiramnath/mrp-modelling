@@ -1,0 +1,236 @@
+---
+title: "Stack Data Strategy Exercise"
+output: html_document
+author: "Manasi Ramnath"
+date: "2024-03-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+### Creating the post-stratification frame
+
+Post-stratification data was taken from the Office for National Statistics (ONS) website. I selected the population type "All usual residents" since they make up people who are usually resident in England or Wales and it is the main population base for Census statistics. The Area Type was specified as "Westminister Parliamentary Constituencies" which include 573 constituencies in England and Wales (Note: As of 2024 there are now 575 constituencies in England and Wales but the analysis focuses on 2019 elections and thus the number of constituencies were identical to those in previous General Elections since 2005 for Scotland and 2010 for the rest of the UK). The variables selected were **age, highest level of qualification and sex**.
+
+The data was downloaded as a CSV file. downloaded from the ONS website and saved as a CSV file. The data was then loaded into R.
+
+```{r}
+library(tidyverse)
+# Load the data
+p <- read.csv("poststrat.csv")
+# Rename the columns
+colnames(p) <- c("ccode", "cname", "age_code", "age_cat", "edu_code","edu_labels", "sex_code", "sex_cat", "count")
+
+## sex_cat
+# Make dummy variable for sex 
+p <- p %>% mutate(female=if_else(sex_cat == "Female",1,0)) %>% relocate(female,.after = sex_cat)
+
+## age_cat
+# Transform age categories to factor variables
+p$age_cat <- factor(p$age_cat)
+# Remove rows with "Aged 15 years and under"
+p <- p %>% filter(age_cat != "Aged 15 years and under")
+
+## edu_code
+# Recode education categories
+p <- p %>% 
+  mutate(edu_cat = case_when(
+    edu_code == "0" ~ "No qualifications",
+    edu_code == "1" ~ "Level 1",
+    edu_code == "2" ~ "Level 2",
+    edu_code == "3" ~ "Level 3",
+    edu_code == "4" ~ "Level 4 and above",
+    TRUE ~ "Other" 
+  )) %>% 
+  relocate(edu_cat,.after = edu_labels)
+p$edu_cat <- factor(p$edu_cat)
+
+# Keep only the columns needed for post-stratification
+p <- p %>% select(ccode, cname, age_cat, edu_cat, female, count)
+
+# Add variable called perc that groups the count by ccode and calculates the percentage of each group
+p <- p %>% group_by(ccode) %>% mutate(perc = count/sum(count)*100) %>% ungroup()
+```
+
+```{r}
+# Checking if all constituencies are represented in the frame
+cat("There are", length(unique(p$ccode)), "parliamentary constituencies in the post-stratification frame. \n")
+```
+
+### Loading the survey data
+
+The survey data is then loaded into R. The survey data is from Wave 17 of the 2014-2023 British Election Study (BES) Internet Panel. 34,366 respondents took wave 17 of the British Election Study and was conducted by YouGov between 1st November 2019 and 12th November 2019. This wave was chosen as it was the latest pre-election survey. The survey data was downloaded as a SPSS file and loaded into R using the `haven` package.
+
+**Variables chosen:**
+
+-   `pcon_code`: Parliamentary constituency code
+
+-   `generalElectionVote`: Vote intention in the 2019 General Election
+
+-   `p_education`: Highest level of education
+
+-   `age`: Age
+
+-   `gender`: Gender (Male or Female)
+
+#### Cleaning data
+
+```{r}
+library(haven)
+# Load the survey data
+bes <- read_sav("bes2019.sav")
+# Select variables of interest
+bes <- bes %>% select(pcon_code, generalElectionVote, p_education, age, gender) 
+
+## pcon_code 
+# Remove respondents with missing constituencies or who belong to constituencies outside of England and Wales
+bes <- bes %>% filter(pcon_code %in% p$ccode)
+# Checking if all 573 constituencies are represented in the survey data
+# all(unique(bes$pcon_code) %in% p$ccode)
+
+# Rename pcon_code to ccode for consistency
+bes <- bes %>% rename(ccode = pcon_code)
+# Make ccode factor
+bes$ccode <- as.factor(bes$ccode)
+
+## generalElectionVote
+# Recode by making values 4-8 and 11-13 under 9
+# The categories for outcome variable are Conservative, Labour, Liberal Democrats, Others and Don't know
+
+bes <- bes %>% 
+  mutate(vote = case_when(
+    generalElectionVote == 0 ~ "Would not vote",
+    generalElectionVote == 1 ~ "Conservative",
+    generalElectionVote == 2 ~ "Labour",
+    generalElectionVote == 3 ~ "Liberal Democrat",
+    generalElectionVote == 9999 ~ "Don't know",
+    TRUE ~ "Other" 
+  )) %>% 
+  relocate(vote, .after = generalElectionVote)
+
+# Make dummies for vote
+bes <- bes %>% mutate(con = if_else(vote == "Conservative", 1, 0),
+                      labour = if_else(vote == "Labour", 1, 0),
+                      libdem = if_else(vote == "Liberal Democrat", 1, 0),
+                      other = if_else(vote == "Other", 1, 0),
+                      dontknow = if_else(vote == "Don't know", 1, 0)) 
+
+## p_education
+# Recode education categories
+bes <- bes %>% 
+  mutate(edu_cat = case_when(
+    p_education == 1 ~ "No qualifications",
+    p_education == 8 ~ "Level 1",
+    p_education %in% c(5,9,10) ~ "Level 2",
+    p_education %in% c(6,7,11,12) ~ "Level 3",
+    p_education %in% 13:17 ~ "Level 4 and above",
+    p_education %in% 19:20 ~ NA, # Coded "Don't know" and "Prefer not to say" as NA
+    TRUE ~ "Other" 
+  )) %>% 
+  relocate(edu_cat, .after = p_education)
+# Remove NAs from edu_cat
+bes <- bes %>% filter(!is.na(edu_cat))
+# Make edu_cat a factor variable
+bes$edu_cat <- factor(bes$edu_cat)
+
+## age
+# Make age categories
+bes <- bes %>% 
+  mutate(age_cat = case_when(
+    age < 16 ~ "Aged 15 years and under",
+    age < 25 ~ "Aged 16 to 24 years",
+    age < 35 ~ "Aged 25 to 34 years",
+    age < 50 ~ "Aged 35 to 49 years",
+    age < 65 ~ "Aged 50 to 64 years",
+    age >= 65 ~ "Aged 65 years and over",
+    TRUE ~ "NA"
+  )) %>% 
+  relocate(age_cat, .after = age)
+
+# Make age_cat a factor variable
+bes$age_cat <- factor(bes$age_cat)
+
+## gender
+# Make dummy variable for gender
+bes <- bes %>% mutate(female = ifelse(gender == 2, 1, 0)) %>% relocate(female, .after = gender)
+
+# Keep variables of interest
+bes <- bes %>% select(ccode, con, labour,libdem, other, dontknow, edu_cat, age_cat, female)
+```
+
+```{r}
+glm1 <- glm(formula = con ~ female + age_cat + edu_cat, family = binomial(link = "logit"), data = bes)
+p$prediction <- predict(glm1, p, type="response", allow.new.levels=TRUE)
+p$weight.pred <- p$prediction*p$perc*100
+# remove the prediction and weight.pred columns
+p <- p %>% select(-prediction, -weight.pred)
+```
+
+#### Multilevel logistic model
+The intuition behind using a multilevel model is that the data is nested within constituencies. The model will account for the clustering of individuals within constituencies. The model will be fitted for each party vote separately.
+```{r}
+library(lme4)
+
+con_vote <- glmer(formula = con ~ female + age_cat + edu_cat + (1 | ccode), family = binomial(link = "logit"), data = bes)
+labour_vote <- glmer(formula = labour ~ female + age_cat + edu_cat + (1 | ccode), family = binomial(link = "logit"), data = bes)
+libdem_vote <- glmer(formula = libdem ~ female + age_cat + edu_cat + (1 | ccode), family = binomial(link = "logit"), data = bes)
+other_vote <- glmer(formula = other ~ female + age_cat + edu_cat + (1 | ccode), family = binomial(link = "logit"), data = bes)
+dontknow_vote <- glmer(formula = dontknow ~ female + age_cat + edu_cat + (1 | ccode), family = binomial(link = "logit"), data = bes)
+```
+
+
+#### Predict and post-stratify the results
+```{r}
+#1 Predict
+p$con_prediction <- predict(con_vote, newdata=p, type="response", allow.new.levels=TRUE)
+p$labour_prediction <- predict(labour_vote, newdata=p, type="response", allow.new.levels=TRUE)
+p$libdem_prediction <- predict(libdem_vote, newdata=p, type="response", allow.new.levels=TRUE)
+p$other_prediction <- predict(other_vote, newdata=p, type="response", allow.new.levels=TRUE)
+p$dontknow_prediction <- predict(dontknow_vote, newdata=p, type="response", allow.new.levels=TRUE)
+
+#2 Weight
+p$con_weight.pred <- p$con_prediction*p$perc*100
+p$labour_weight.pred <- p$labour_prediction*p$perc*100
+p$libdem_weight.pred <- p$libdem_prediction*p$perc*100
+p$other_weight.pred <- p$other_prediction*p$perc*100
+p$dontknow_weight.pred <- p$dontknow_prediction*p$perc*100
+
+#3 Post-stratify
+con_results <- data.table(p)[ , .(final.est = sum(con_weight.pred)), by = .(ccode)]
+labour_results <- data.table(p)[ , .(final.est = sum(labour_weight.pred)), by = .(ccode)]
+libdem_results <- data.table(p)[ , .(final.est = sum(libdem_weight.pred)), by = .(ccode)]
+other_results <- data.table(p)[ , .(final.est = sum(other_weight.pred)), by = .(ccode)]
+dontknow_results <- data.table(p)[ , .(final.est = sum(dontknow_weight.pred)), by = .(ccode)]
+```
+
+### Loading the random probaility survey data
+
+```{r}
+library(haven)
+# Load BES random probability survey data
+rps <- read_sav("bes-rps.sav")
+# Election results
+results <- read_sav("election-results.sav")
+# survey data
+bes <- read_sav("bes2019.sav")
+```
+
+```{r}
+bes$gender
+```
+
+# Random probability survey
+
+```{r}
+rps$b01
+```
+
+#### References
+
+[1] <https://www.ons.gov.uk/datasets/create>
+
+## Appendix: All code in this assignment
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
