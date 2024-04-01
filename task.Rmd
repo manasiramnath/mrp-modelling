@@ -159,13 +159,6 @@ bes <- bes %>% mutate(female = ifelse(gender == 2, 1, 0)) %>% relocate(female, .
 bes <- bes %>% select(ccode, con, labour,libdem, other, dontknow, edu_cat, age_cat, female)
 ```
 
-```{r}
-glm1 <- glm(formula = con ~ female + age_cat + edu_cat, family = binomial(link = "logit"), data = bes)
-p$prediction <- predict(glm1, p, type="response", allow.new.levels=TRUE)
-p$weight.pred <- p$prediction*p$perc*100
-# remove the prediction and weight.pred columns
-p <- p %>% select(-prediction, -weight.pred)
-```
 
 #### Multilevel logistic model
 The intuition behind using a multilevel model is that the data is nested within constituencies. The model will account for the clustering of individuals within constituencies. The model will be fitted for each party vote separately.
