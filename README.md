@@ -8,3 +8,6 @@ The files included in the repository are:
 3. viz_task.ipynb: Jupyter notebook containing visualisation of vote estimates from MRP modelling
 4. final_poststrat.csv: Final post-stratification frame, with scaled estimates
 5. ons.csv: Custom dataset from ONS
+7. bes.sav.zip: Zip file containing 2019 pre-election internet panel data (wave 17 of BES)
+8. rps.sav: Random Probability Survey (post-election data from BES)
+9. election-results.sav: 2019 Election Results downloaded from BES
