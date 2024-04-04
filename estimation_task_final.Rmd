@@ -159,8 +159,7 @@ bes <- bes %>% filter(vote != "NA")
 bes <- bes %>% mutate(con = if_else(vote == "Conservative", 1, 0),
                       labour = if_else(vote == "Labour", 1, 0),
                       libdem = if_else(vote == "Liberal Democrat", 1, 0),
-                      other = if_else(vote == "Other", 1, 0),
-                      dontknow = if_else(vote == "Don't know", 1, 0)) 
+                      other = if_else(vote == "Other", 1, 0)) 
 ## age
 # Make age categories
 bes <- bes %>% 
@@ -200,7 +199,7 @@ bes$edu_cat <- factor(bes$edu_cat)
 bes <- bes %>% mutate(female = ifelse(gender == 2, 1, 0)) 
 
 # Keep variables of interest
-bes <- bes %>% select(ccode, con, labour,libdem, other, dontknow, edu_cat, age_cat, female)
+bes <- bes %>% select(ccode, con, labour,libdem, other, edu_cat, age_cat, female)
 ```
 
 ## [**2.2. Modelling party vote intention**]{style="color: #EE6A50;"} {#mlmvote}
