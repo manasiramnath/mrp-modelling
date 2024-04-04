@@ -489,7 +489,7 @@ var.labels <- c(
   edu_cat = "Education category",
   female = "Sex (0 = Male, 1 = Female)",
   count = "Number of respondents",
-  perc = "Percentage of respondents in constituency (from multilevel model)",
+  perc = "Percentage of respondents in constituency",
   turnout = "Estimated turnout in constituency (from multilevel model)",
   con_prediction = "Predicted Conservative vote share (from multilevel model)",
   labour_prediction = "Predicted Labour vote share (from multilevel model)",
