@@ -344,7 +344,7 @@ voted_model <- glmer(formula = voted ~ female + age_cat + edu_cat + (1 | ccode),
 
 ## [**3.3. Predicting probabilities of voting**]{style="color: #EE6A50;"} {#predprobturnout}
 
-Similar to 2.3, the `predict_prob` function is used to produce a predicted probability of voter turnout for each cell in the post-stratification frame `p`, based on the fitted multilevel logistic regression model `voted_model`.
+Similar to 2.3, the `predict_prob` function is used to produce a predicted probability of voter turnout for each cell in the post-stratification frame `poststrat`, based on the fitted multilevel logistic regression model `voted_model`.
 
 ```{r}
 # Predicting probabilities
@@ -355,7 +355,7 @@ poststrat$turnout <- predict_prob(voted_model)
 
 ## [**4.1 Calculate weighted predictions based on `perc` and `turnout`**]{style="color: #EE6A50;"} {#weightedpred}
 
-The predictions from 2.3 are now weighted by the proportion of people in each constituency that fall under these categories, or `perc`, in the post-stratification frame `p`, as well as `turnout`. Using the `weight_pred` function will therefore allow us to calculate the weighted predictions for each demographic group's vote share based on both their percentage in the area's population, and their probability of actually voting as well.
+The predictions from 2.3 are now weighted by the proportion of people in each constituency that fall under these categories, or `perc`, in the post-stratification frame `poststrat`, as well as `turnout`. Using the `weight_pred` function will therefore allow us to calculate the weighted predictions for each demographic group's vote share based on both their percentage in the area's population, and their probability of actually voting as well.
 
 ```{r}
 # Function to calculate weighted predictions
