@@ -13,3 +13,5 @@ Datasets:
 2. bes2019.sav.zip: Zip file containing 2019 pre-election internet panel data (wave 17 of BES)
 3. rps.sav: Random Probability Survey (post-election data from BES)
 4. election-results.sav: 2019 Election Results downloaded from BES
+5. party_wins.csv: Total predicted and actual wins by party
+6. wins_by_con.csv: Wins by party with estimated and true vote shares
