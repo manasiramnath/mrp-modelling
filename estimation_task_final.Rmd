@@ -557,6 +557,7 @@ ggplot(mae_data, aes(x = Party, y = MAE, fill = Party)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 The model doesn't perform too well in predicting the vote share for the Conservative and Labour parties. On average, the model is getting the Conservative result wrong by 17.8 percentage points in each constituency, and the Labour result wrong by 14.3 percentage points. The model performs better for Liberal Democrats and other parties, with mean absolute errors of 5.1 and 7.2 percentage points, respectively.
 
 
