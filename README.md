@@ -3,7 +3,7 @@
 The following analysis uses a Multi-level Regression and Post-Stratification (MRP) model to estimate UK General Election results in 2019. 
 
 The files included in the repository are:
-1. estimation_task_final.Rmd: R-Markdown file containing the data analysis and MRP modelling with report
+1. estimation_task.Rmd: R-Markdown file containing the data analysis and MRP modelling with report
 2. estimation_task.html: HTML file for readibility
 3. viz_task_final.ipynb: Jupyter notebook containing visualisation of vote estimates from MRP modelling
 4. final_poststrat.csv: Final post-stratification frame, with scaled estimates
