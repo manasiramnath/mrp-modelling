@@ -219,7 +219,7 @@ other_vote <- glmer(formula = other ~ female + age_cat + edu_cat + (1 | ccode), 
 
 ## [**2.3. Predicting probabilities of voting for each party**]{style="color: #EE6A50;"} {#predprobvote}
 
-The next step is to produce a predicted probability of voting for each party for every demographic type in every constituency. This is done through the `predict_prob` function, which takes the above models as inputs and generates predictions for the observations contained in the dataset p which is all the possible combinations of demographic types in each constituency.
+The next step is to produce a predicted probability of voting for each party for every demographic type in every constituency. This is done through the `predict_prob` function, which takes the above models as inputs and generates predictions for the observations contained in the dataset `poststrat` which is all the possible combinations of demographic types in each constituency.
 
 ```{r}
 # Function to predict probabilities
